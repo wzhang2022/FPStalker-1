@@ -103,7 +103,7 @@ def get_fingerprints_experiments(cur, min_nb_fingerprints, attributes, id_file="
         ids_query = ",".join(ids_query)
         cur.execute("SELECT *, NULL as canvasJS FROM extensionData WHERE counter < 199910 AND \
                     id in ("+ids_query+") and \
-                    id in (SELECT id FROM extensionDataScheme GROUP BY \
+                    id in (SELECT id FROM extensionData GROUP BY \
                     id having count(*) > "+str(min_nb_fingerprints)+")\
                     ORDER by counter ASC")
         fps = cur.fetchall()
