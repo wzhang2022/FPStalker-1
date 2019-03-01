@@ -46,6 +46,7 @@ def main(argv):
         fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
         train_data, test_data = split_data(0.40, fingerprint_dataset)
         print("Fetched %d fingerprints." % len(fingerprint_dataset))
+        print("Length of test set: {:d}".format(len(test_data)))
         # we iterate on different values of visit_frequency
         visit_frequencies = [1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20]
         for visit_frequency in visit_frequencies:
