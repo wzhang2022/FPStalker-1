@@ -20,7 +20,7 @@ ALGO_NAME_TO_FUNCTION = {
 }
 
 def main(argv):
-    con = mdb.connect(host="localhost", port=3310, user="root", passwd="bdd", db="canvas_fp_project")
+    con = mdb.connect(host="127.0.0.1", port=3310, user="root", passwd="bdd", db="canvas_fp_project")
     cur = con.cursor(mdb.cursors.DictCursor)
 
     if argv[0] == CONSISTENT_IDS:
