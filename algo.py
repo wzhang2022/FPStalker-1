@@ -314,6 +314,7 @@ def replay_scenario(fingerprint_dataset, visit_frequency, link_fingerprint, \
     """
     nb_max_cmp = 2
     replay_sequence = generate_replay_sequence(fingerprint_dataset, visit_frequency)
+    print("there are {:d} fingerprints in the sequence".format(len(replay_sequence)))
     counter_to_fingerprint = dict()
     for fingerprint in fingerprint_dataset:
         counter_to_fingerprint[fingerprint.getCounter()] = fingerprint
