@@ -454,8 +454,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                            Fingerprint.IE_DATA_JS,
                            Fingerprint.ADDRESS_HTTP,
                            Fingerprint.BROWSER_FAMILY,
-                           Fingerprint.COOKIES_JS,
-                           Fingerprint.DNT_JS,
+                           # Fingerprint.COOKIES_JS,
+                           # Fingerprint.DNT_JS,
                            Fingerprint.END_TIME,
                            Fingerprint.FONTS_FLASH_HASHED,
                            Fingerprint.GLOBAL_BROWSER_VERSION,
@@ -468,12 +468,12 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                            Fingerprint.NB_PLUGINS,
                            Fingerprint.COUNTER,
                            Fingerprint.OS,
-                           Fingerprint.ACCEPT_HTTP,
+                           # Fingerprint.ACCEPT_HTTP,
                            Fingerprint.CONNECTION_HTTP,
-                           Fingerprint.ENCODING_HTTP,
+                           # Fingerprint.ENCODING_HTTP,
                            Fingerprint.RESOLUTION_FLASH,
-                           Fingerprint.TIMEZONE_JS,
-                           Fingerprint.VENDOR,
+                           # Fingerprint.TIMEZONE_JS,
+                           # Fingerprint.VENDOR,
                            ])
 
         att_ml = set(fingerprint_dataset[0].val_attributes.keys())
