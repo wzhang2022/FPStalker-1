@@ -474,8 +474,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                            # Fingerprint.ENCODING_HTTP,
                            Fingerprint.RESOLUTION_FLASH,
                            # Fingerprint.TIMEZONE_JS,
-                           # Fingerprint.VENDOR,
-                           Fingerprint.RENDERER
+                           Fingerprint.VENDOR,
+                           # Fingerprint.RENDERER
                            ])
 
         att_ml = set(fingerprint_dataset[0].val_attributes.keys())
@@ -515,7 +515,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                     if previous_fingerprint is not None:
                         x_row, y_row = compute_similarity_fingerprint(fingerprint, previous_fingerprint, att_ml,
                                                                       train_mode=True)
-                        print("Length vector: {:d}".format(len(x_row)))
+                        # print("Length vector: {:d}".format(len(x_row)))
                         X.append(x_row)
                         y.append(y_row)
                     previous_fingerprint = fingerprint
@@ -524,8 +524,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
             for user_id in user_id_to_fps:
                 for fp1 in user_id_to_fps[user_id]:
                     try:
-                        compare_with_id = index_to_user_id[random.randint(0, len(user_id_to_fps))]
-                        compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id]))
+                        compare_with_id = index_to_user_id[random.randint(0, len(index_to_user_id)-1)]
+                        compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id])-1)
                         fp2 = user_id_to_fps[compare_with_id][compare_with_fp]
                         x_row, y_row = compute_similarity_fingerprint(fp1, fp2, att_ml, train_mode=True)
                         X.append(x_row)
@@ -594,8 +594,8 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
                        # Fingerprint.ENCODING_HTTP,
                        Fingerprint.RESOLUTION_FLASH,
                        # Fingerprint.TIMEZONE_JS,
-                       # Fingerprint.VENDOR,
-                       Fingerprint.RENDERER
+                       Fingerprint.VENDOR,
+                       # Fingerprint.RENDERER
                        ])
 
     att_ml = set(fingerprint_unknown.val_attributes.keys())
