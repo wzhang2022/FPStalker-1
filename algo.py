@@ -475,11 +475,13 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                            Fingerprint.RESOLUTION_FLASH,
                            # Fingerprint.TIMEZONE_JS,
                            # Fingerprint.VENDOR,
+                           Fingerprint.RENDERER
                            ])
 
         att_ml = set(fingerprint_dataset[0].val_attributes.keys())
         att_ml = sorted([x for x in att_ml if x not in not_to_test])
-
+        print("att ml:")
+        print(att_ml)
         for fingerprint in fingerprint_dataset:
             counter_to_fingerprint[fingerprint.getCounter()] = fingerprint
             if fingerprint.getId() not in user_ids:
@@ -505,9 +507,10 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
 
             # we generate the training data
             X, y = [], []
-            attributes = sorted(fingerprint_dataset[0].val_attributes.keys())
+            print("Number of user id: {:d}".format(len(user_id_to_fps)))
             for user_id in user_id_to_fps:
                 previous_fingerprint = None
+                print("Number of fingerprints: {:d}".format(len(user_id_to_fps[user_id])))
                 for fingerprint in user_id_to_fps[user_id]:
                     if previous_fingerprint is not None:
                         x_row, y_row = compute_similarity_fingerprint(fingerprint, previous_fingerprint, att_ml,
@@ -527,6 +530,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                         X.append(x_row)
                         y.append(y_row)
                     except:
+                        print("error")
                         pass
 
         print("Start training model")
