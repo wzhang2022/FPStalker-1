@@ -669,7 +669,7 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
             nearest = nearest[:max_nearest]
 
             diff_enough = True
-            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba + 0.2: # 0.1 = diff parameter
+            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba + 0.3: # 0.1 = diff parameter
                 diff_enough = False
 
             if diff_enough and predictions_model[nearest[0], 0] > lambda_threshold and candidates_have_same_id(
