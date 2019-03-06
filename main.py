@@ -72,14 +72,14 @@ def main(argv):
         fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
         print("Fetched %d fingerprints." % len(fingerprint_dataset))
         train_data, test_data = split_data(0.40, fingerprint_dataset)
-        model = train_ml(fingerprint_dataset, train_data, load=True)
+        model = train_ml(fingerprint_dataset, train_data, load=False)
         # we iterate on different values of visit_frequency
         visit_frequencies = [1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20]
         for visit_frequency in visit_frequencies:
             result_scenario = replay_scenario(test_data, visit_frequency,
                                               ml_based,
                                               filename="./results/"+exp_name+"_"+str(visit_frequency)+"scenario_replay_result.csv",
-                                              model=model, lambda_threshold=0.994)
+                                              model=model, lambda_threshold=0.997)
             analyse_scenario_result(result_scenario, test_data,
                                     fileres1="./results/"+exp_name+"_"+str(visit_frequency)+"-res1.csv",
                                     fileres2="./results/"+exp_name+"_"+str(visit_frequency)+"-res2.csv",
