@@ -530,9 +530,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                         x_row, y_row = compute_similarity_fingerprint(fp1, fp2, att_ml, train_mode=True)
                         X.append(x_row)
                         y.append(y_row)
-                    except:
-                        print("error")
-                        pass
+                    except Exception as e:
+                        print(e)
 
         print("Start training model")
         model = RandomForestClassifier(n_jobs=4)
@@ -596,6 +595,7 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
                        Fingerprint.RESOLUTION_FLASH,
                        # Fingerprint.TIMEZONE_JS,
                        # Fingerprint.VENDOR,
+                       Fingerprint.RENDERER
                        ])
 
     att_ml = set(fingerprint_unknown.val_attributes.keys())
