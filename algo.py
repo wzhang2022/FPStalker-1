@@ -515,7 +515,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                     if previous_fingerprint is not None:
                         x_row, y_row = compute_similarity_fingerprint(fingerprint, previous_fingerprint, att_ml,
                                                                       train_mode=True)
-                        # print("Length vector: {:d}".format(len(x_row)))
+                        print("Length vector: {:d}".format(len(x_row)))
                         X.append(x_row)
                         y.append(y_row)
                     previous_fingerprint = fingerprint
@@ -531,6 +531,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                         X.append(x_row)
                         y.append(y_row)
                     except Exception as e:
+                        print("error")
                         print(e)
 
         print("Start training model")
