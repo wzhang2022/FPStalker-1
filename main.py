@@ -79,7 +79,7 @@ def main(argv):
             result_scenario = replay_scenario(test_data, visit_frequency,
                                               ml_based,
                                               filename="./results/"+exp_name+"_"+str(visit_frequency)+"scenario_replay_result.csv",
-                                              model=model, lambda_threshold=0.997)
+                                              model=model, lambda_threshold=0.994)
             analyse_scenario_result(result_scenario, test_data,
                                     fileres1="./results/"+exp_name+"_"+str(visit_frequency)+"-res1.csv",
                                     fileres2="./results/"+exp_name+"_"+str(visit_frequency)+"-res2.csv",
