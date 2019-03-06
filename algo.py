@@ -515,6 +515,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                     if previous_fingerprint is not None:
                         x_row, y_row = compute_similarity_fingerprint(fingerprint, previous_fingerprint, att_ml,
                                                                       train_mode=True)
+                        print(att_ml)
                         print("Length vector: {:d}".format(len(x_row)))
                         X.append(x_row)
                         y.append(y_row)
@@ -530,9 +531,11 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                         x_row, y_row = compute_similarity_fingerprint(fp1, fp2, att_ml, train_mode=True)
                         X.append(x_row)
                         y.append(y_row)
+                        print("success")
                     except Exception as e:
-                        print("error")
-                        print(e)
+                        # print("error")
+                        # print(e)
+                        pass
 
         print("Start training model")
         model = RandomForestClassifier(n_jobs=4)
