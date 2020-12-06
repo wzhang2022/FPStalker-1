@@ -435,8 +435,7 @@ def compute_similarity_fingerprint(fp1, fp2, attributes, train_mode):
     return np.asarray(similarity_vector[1:]), np.asarray(similarity_vector[0])
 
 
-def train_ml(fingerprint_dataset, train_data, load=True, \
-             model_path="./data/my_ml_model"):
+def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model"):
     if load:
         model = joblib.load(model_path)
     else:

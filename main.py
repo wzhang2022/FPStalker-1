@@ -103,7 +103,7 @@ def optimize_lambda_main_call(cur):
     optimize_lambda(fingerprint_dataset, train_data, test_data)
 
 
-def benchmark_ml(prefix_files, nb_cores):
+def benchmark_ml(cur, prefix_files, nb_cores):
     nb_processes = [1, 2, 4, 8, 16, 24, 32]
     nb_fingerprints = [500000, 1000000, 2000000]
     #  nb_fingerprints = [500000, 1000000, 2000000]
@@ -136,7 +136,7 @@ def benchmark_ml(prefix_files, nb_cores):
                 ))
 
 
-def benchmark_rules(prefix_files, nb_cores, nb_processes=[1, 2, 4, 8, 16, 24, 32],
+def benchmark_rules(cur, prefix_files, nb_cores, nb_processes=[1, 2, 4, 8, 16, 24, 32],
                     nb_fingerprints=[500000, 1000000, 2000000]):
     fn = parallel_pipe_task_rules_f
     with open("./benchres/%s.csv" % prefix_files, "w")as f:
@@ -177,9 +177,9 @@ def main(argv):
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
     elif argv[0] == BENCHMARK_ML:
-        benchmark_ml(argv[1], int(argv[2]))
+        benchmark_ml(cur, argv[1], int(argv[2]))
     elif argv[0] == BENCHMARK_RULES:
-        benchmark_rules(argv[1], int(argv[2]))
+        benchmark_rules(cur, argv[1], int(argv[2]))
 
 if __name__ == "__main__":
     main(sys.argv[1:])
