@@ -14,7 +14,6 @@ REPLAY_ECKERSLEY = "replayeck"
 AUTOMATE_REPLAYS = "auto"
 RULE_BASED = "rules"
 ML_BASED = "ml"
-AUTOMATE_ML = "automl"
 AUTO_DEEP_EMBEDDING = "deepembedding"
 OPTIMIZE_LAMBDA = "lambda"
 BENCHMARK_ML = "automlbench"
@@ -69,7 +68,7 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
 
 
 def automate_ml_embedding(cur, exp_name, nb_min_fingerprints):
-    print("Start automating ml based scenario")
+    print("Start automating ml embedding scenario")
 
 
 
@@ -153,9 +152,8 @@ def main(argv):
     if argv[0] == CONSISTENT_IDS:
         fetch_consistent_user_ids(cur)
     elif argv[0] == AUTOMATE_REPLAYS:
+        # argv[2] can be "eckersley", "rulebased", or "hybrid_algo"
         automate_replays(cur, argv[1], argv[2], int(argv[3]))
-    elif argv[0] == AUTOMATE_ML:
-        automate_replays(cur, argv[1], "hybrid_algo", int(argv[2]))
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
     elif argv[0] == BENCHMARK_ML:
