@@ -8,6 +8,7 @@ from Levenshtein import ratio
 from fingerprint import Fingerprint
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
+from sklearn.linear_model import LogisticRegressionCV
 import numpy as np
 from multiprocessing import Pool, Pipe
 import time
@@ -537,8 +538,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
 
         print("Start training model")
         # CHANGE MODEL HERE
-        model = RandomForestClassifier(n_jobs=4)
-        # model = LogisticRegression()
+        # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
+        model = LogisticRegressionCV()
 
         print("Training data: %d" % len(X))
         model.fit(X, y)
@@ -670,7 +671,7 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
             nearest = nearest[:max_nearest]
 
             diff_enough = True
-            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba + 0.3: # 0.1 = diff parameter
+            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba + 0.1: # 0.1 = diff parameter
                 diff_enough = False
 
             if diff_enough and predictions_model[nearest[0], 0] > lambda_threshold and candidates_have_same_id(
@@ -844,10 +845,11 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
                     X.append(x_row)
                     y.append(y_row)
                 except:
-                    print("error")
+                    # print("error")
                     pass
 
     model = RandomForestClassifier(n_jobs=4)
+    # model = LogisticRegressionCV(max_iter = 10000)
     print("Training data: %d" % len(X))
     model.fit(X, y)
     print("Finished training")

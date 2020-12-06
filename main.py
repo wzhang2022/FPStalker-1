@@ -74,7 +74,7 @@ def main(argv):
         train_data, test_data = split_data(0.40, fingerprint_dataset)
         # CHANGE MODEL HERE
         # change load to false to train custom model
-        model = train_ml(fingerprint_dataset, train_data, load=True)
+        model = train_ml(fingerprint_dataset, train_data, load=False)
         # we iterate on different values of visit_frequency
         visit_frequencies = [1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20]
         for visit_frequency in visit_frequencies:
