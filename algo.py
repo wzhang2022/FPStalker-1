@@ -304,7 +304,7 @@ def simple_eckersley(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint
 
 
 def replay_scenario(fingerprint_dataset, visit_frequency, link_fingerprint, \
-                    filename="./results/scenario_replay_result.csv", model=None, lambda_threshold=None):
+                    filename="./results/scenario_replay_result.csv", lambda_threshold=None):
     """
         Takes as input the fingerprint dataset,
         the frequency of visit in days,
@@ -328,12 +328,7 @@ def replay_scenario(fingerprint_dataset, visit_frequency, link_fingerprint, \
         counter_to_time[elt[0]] = elt[1]
         counter = int(elt[0].split("_")[0])
         fingerprint_unknown = counter_to_fingerprint[counter]
-        if model is None:
-            assigned_id = link_fingerprint(fingerprint_unknown, user_id_to_fps, \
-                                           counter_to_fingerprint)
-        else:
-            assigned_id = link_fingerprint(fingerprint_unknown, user_id_to_fps, \
-                                           counter_to_fingerprint, model, lambda_threshold)
+        assigned_id = link_fingerprint(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint)
         fps_available.append((elt[0], assigned_id))
 
         if assigned_id not in user_id_to_fps:

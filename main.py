@@ -6,7 +6,7 @@ from algo import simple_eckersley, rule_based, split_data, train_ml, optimize_la
 from utils import get_consistent_ids, get_fingerprints_experiments
 from algo import benchmark_parallel_f_ml, benchmark_parallel_f_rules, parallel_pipe_task_ml_f, parallel_pipe_task_rules_f
 import MySQLdb as mdb
-
+from functools import partial
 
 # Modes to run main.py
 CONSISTENT_IDS = "getids"
@@ -15,14 +15,10 @@ AUTOMATE_REPLAYS = "auto"
 RULE_BASED = "rules"
 ML_BASED = "ml"
 AUTOMATE_ML = "automl"
+AUTO_DEEP_EMBEDDING = "deepembedding"
 OPTIMIZE_LAMBDA = "lambda"
 BENCHMARK_ML = "automlbench"
 BENCHMARK_RULES = "autorulesbench"
-
-ALGO_NAME_TO_FUNCTION = {
-    "eckersley": simple_eckersley,
-    "rulebased": rule_based,
-}
 
 VISIT_FREQUENCIES = [1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20]
 
@@ -42,14 +38,24 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
                  Fingerprint.JAVASCRIPT_ATTRIBUTES + Fingerprint.FLASH_ATTRIBUTES
 
-    algo_matching = ALGO_NAME_TO_FUNCTION[algo_matching_name]
-
     print("Begin automation of scenarios")
     print("Start fetching fingerprints...")
     fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
     train_data, test_data = split_data(0.40, fingerprint_dataset)
     print("Fetched %d fingerprints." % len(fingerprint_dataset))
     print("Length of test set: {:d}".format(len(test_data)))
+
+    if algo_matching_name == "hybrid_algo":
+        model = train_ml(fingerprint_dataset, train_data, load=False)
+
+    # select the right algorithm
+    algo_name_to_function = {
+        "eckersley": simple_eckersley,
+        "rulebased": rule_based,
+        "hybrid_algo": partial(ml_based, model=model, lambda_threshold=0.1)
+    }
+    algo_matching = algo_name_to_function[algo_matching_name]
+
     # we iterate on different values of visit_frequency
     for visit_frequency in VISIT_FREQUENCIES:
         result_scenario = replay_scenario(test_data, visit_frequency,
@@ -62,33 +68,9 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
                                 )
 
 
-def automate_ml(cur, exp_name, nb_min_fingerprints):
+def automate_ml_embedding(cur, exp_name, nb_min_fingerprints):
     print("Start automating ml based scenario")
-    algo_matching_name = "hybridalgo"
-    exp_name += "-%s-%d" % (algo_matching_name, nb_min_fingerprints)
 
-    attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
-                 Fingerprint.JAVASCRIPT_ATTRIBUTES + Fingerprint.FLASH_ATTRIBUTES
-
-    print("Begin automation of scenarios")
-    print("Start fetching fingerprints...")
-    fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
-    print("Fetched %d fingerprints." % len(fingerprint_dataset))
-    train_data, test_data = split_data(0.40, fingerprint_dataset)
-    # CHANGE MODEL HERE
-    # change load to false to train custom model
-    model = train_ml(fingerprint_dataset, train_data, load=False)
-    # we iterate on different values of visit_frequency
-    for visit_frequency in VISIT_FREQUENCIES:
-        result_scenario = replay_scenario(test_data, visit_frequency,
-                                          ml_based,
-                                          filename="./results/" + exp_name + "_" + str(
-                                              visit_frequency) + "scenario_replay_result.csv",
-                                          model=model, lambda_threshold=0.994)
-        analyse_scenario_result(result_scenario, test_data,
-                                fileres1="./results/" + exp_name + "_" + str(visit_frequency) + "-res1.csv",
-                                fileres2="./results/" + exp_name + "_" + str(visit_frequency) + "-res2.csv",
-                                )
 
 
 def optimize_lambda_main_call(cur):
@@ -173,13 +155,15 @@ def main(argv):
     elif argv[0] == AUTOMATE_REPLAYS:
         automate_replays(cur, argv[1], argv[2], int(argv[3]))
     elif argv[0] == AUTOMATE_ML:
-        automate_ml(cur, argv[1], int(argv[2]))
+        automate_replays(cur, argv[1], "hybrid_algo", int(argv[2]))
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
     elif argv[0] == BENCHMARK_ML:
         benchmark_ml(cur, argv[1], int(argv[2]))
     elif argv[0] == BENCHMARK_RULES:
         benchmark_rules(cur, argv[1], int(argv[2]))
+    elif argv[0] == AUTO_DEEP_EMBEDDING:
+        automate_ml_embedding(cur, argv[1], int(argv[2]))
 
 if __name__ == "__main__":
     main(sys.argv[1:])
