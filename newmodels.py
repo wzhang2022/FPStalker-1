@@ -1,9 +1,9 @@
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from keras.layers import Dense, Dropout
-from keras.models import Model, Sequential
-from keras.wrappers.scikit_learn import KerasRegressor
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.wrappers.scikit_learn import KerasRegressor
 
 
 # create a function that returns a model, taking as parameters things you
