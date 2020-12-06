@@ -51,7 +51,7 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     algo_name_to_function = {
         "eckersley": simple_eckersley,
         "rulebased": rule_based,
-        "hybrid_algo": partial(ml_based, model=model, lambda_threshold=0.1)
+        "hybridalgo": partial(ml_based, model=model, lambda_threshold=0.1)
     }
     algo_matching = algo_name_to_function[algo_matching_name]
 
@@ -152,7 +152,7 @@ def main(argv):
     if argv[0] == CONSISTENT_IDS:
         fetch_consistent_user_ids(cur)
     elif argv[0] == AUTOMATE_REPLAYS:
-        # argv[2] can be "eckersley", "rulebased", or "hybrid_algo"
+        # argv[2] can be "eckersley", "rulebased", or "hybridalgo"
         automate_replays(cur, argv[1], argv[2], int(argv[3]))
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
