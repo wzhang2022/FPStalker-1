@@ -20,7 +20,7 @@ ALGO_NAME_TO_FUNCTION = {
 }
 
 def main(argv):
-    con = mdb.connect(host="127.0.0.1", port=3310, user="root", passwd="bdd", db="canvas_fp_project")
+    con = mdb.connect(host="127.0.0.1", port=3306, user="stalker", passwd="baddy", db="canvas_fp_project")
     cur = con.cursor(mdb.cursors.DictCursor)
 
     if argv[0] == CONSISTENT_IDS:
@@ -72,6 +72,8 @@ def main(argv):
         fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
         print("Fetched %d fingerprints." % len(fingerprint_dataset))
         train_data, test_data = split_data(0.40, fingerprint_dataset)
+        # CHANGE MODEL HERE
+        # change load to false to train custom model
         model = train_ml(fingerprint_dataset, train_data, load=True)
         # we iterate on different values of visit_frequency
         visit_frequencies = [1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20]

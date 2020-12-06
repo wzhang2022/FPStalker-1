@@ -15,12 +15,12 @@ def get_consistent_ids(cur):
     id_to_nb_inconsistencies = dict()
     id_to_nb_fps = dict()
 
-    cur.execute('SELECT max(counter) as nb_fps from extensionData')
+    cur.execute('SELECT max(counter) as nb_fps from extensiondatascheme')
     nb_fps = 199910 # Limit before update in web extensions
 
     for i in range(0, nb_fps, batch_size):
         print(i)
-        sql = "SELECT * FROM extensionData where counter < %s and counter > %s"
+        sql = "SELECT * FROM extensiondatascheme where counter < %s and counter > %s"
         cur.execute(sql, (i + batch_size, i))
         fps = cur.fetchall()
         for fp_dict in fps:
@@ -77,7 +77,7 @@ def get_consistent_ids(cur):
     # we remove user that poison their canvas
     # we select users that changed canvas too frequently
     cur.execute("SELECT id, count(distinct canvasJSHashed) as count, count(canvasJSHashed) as \
-                nb_fps FROM extensionData group by id having count(distinct canvasJSHashed)/count(canvasJSHashed) > 0.35 \
+                nb_fps FROM extensiondatascheme group by id having count(distinct canvasJSHashed)/count(canvasJSHashed) > 0.35 \
                 and count(canvasJSHashed) > 5 order by id")
     rows = cur.fetchall()
     poisoner_ids = [row["id"] for row in rows]
@@ -101,9 +101,9 @@ def get_fingerprints_experiments(cur, min_nb_fingerprints, attributes, id_file="
             ids_query.append("'" + line.replace("\n", "") + "'")
 
         ids_query = ",".join(ids_query)
-        cur.execute("SELECT *, NULL as canvasJS FROM extensionData WHERE counter < 199910 AND \
+        cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme WHERE counter < 199910 AND \
                     id in ("+ids_query+") and \
-                    id in (SELECT id FROM extensionData GROUP BY \
+                    id in (SELECT id FROM extensiondatascheme GROUP BY \
                     id having count(*) > "+str(min_nb_fingerprints)+")\
                     ORDER by counter ASC")
         fps = cur.fetchall()

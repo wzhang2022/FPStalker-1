@@ -9,8 +9,6 @@ from fingerprint import Fingerprint
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
 import numpy as np
-
-import string
 from multiprocessing import Pool, Pipe
 import time
 
@@ -531,14 +529,17 @@ def train_ml(fingerprint_dataset, train_data, load=True, \
                         x_row, y_row = compute_similarity_fingerprint(fp1, fp2, att_ml, train_mode=True)
                         X.append(x_row)
                         y.append(y_row)
-                        print("success")
+                        # print("success")
                     except Exception as e:
                         # print("error")
                         # print(e)
                         pass
 
         print("Start training model")
+        # CHANGE MODEL HERE
         model = RandomForestClassifier(n_jobs=4)
+        # model = LogisticRegression()
+
         print("Training data: %d" % len(X))
         model.fit(X, y)
         print("Model trained")
@@ -1261,7 +1262,7 @@ def benchmark_parallel_f_ml(fn, cur, nb_fps_query, nb_cores):
     random.seed(seed)
     nb_fps_query = int(nb_fps_query / 50)
 
-    cur.execute("SELECT *, NULL as canvasJS FROM extensionData LIMIT 0," + str(nb_fps_query))
+    cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme LIMIT 0," + str(nb_fps_query))
     fps = cur.fetchall()
 
     attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
@@ -1359,7 +1360,7 @@ def benchmark_parallel_f_ml(fn, cur, nb_fps_query, nb_cores):
 
     # Fingerprints have been distributed, we can start to measure
     print("Start 2nd fake sql query")
-    cur.execute("SELECT *, NULL as canvasJS FROM extensionData LIMIT 1000, 2000")
+    cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme LIMIT 1000, 2000")
     print("Finish 2nd fake sql query")
     fps = cur.fetchall()
     nb_iter = 0
@@ -1464,7 +1465,7 @@ def benchmark_parallel_f_rules(fn, cur, nb_fps_query, nb_cores):
     random.seed(seed)
     nb_fps_query = int(nb_fps_query / 50)
 
-    cur.execute("SELECT *, NULL as canvasJS FROM extensionData LIMIT 0," + str(nb_fps_query))
+    cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme LIMIT 0," + str(nb_fps_query))
     fps = cur.fetchall()
 
     attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
@@ -1562,7 +1563,7 @@ def benchmark_parallel_f_rules(fn, cur, nb_fps_query, nb_cores):
 
     # Fingerprints have been distributed, we can start to measure
     print("Start 2nd fake sql query")
-    cur.execute("SELECT *, NULL as canvasJS FROM extensionData LIMIT 1000, 2000")
+    cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme LIMIT 1000, 2000")
     print("Finish 2nd fake sql query")
     fps = cur.fetchall()
     nb_iter = 0
