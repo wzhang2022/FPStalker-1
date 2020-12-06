@@ -11,7 +11,9 @@ from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegressionCV
 import numpy as np
 from multiprocessing import Pool, Pipe
+from newmodels import sklearn_pipeline
 import time
+import pandas as pd
 
 results = []
 
@@ -471,6 +473,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                            # Fingerprint.RENDERER
                            ])
 
+        not_to_test = set()
+
         att_ml = set(fingerprint_dataset[0].val_attributes.keys())
         att_ml = sorted([x for x in att_ml if x not in not_to_test])
         print("att ml:")
@@ -500,16 +504,16 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
 
             # we generate the training data
             X, y = [], []
-            print("Number of user id: {:d}".format(len(user_id_to_fps)))
+            # print("Number of user id: {:d}".format(len(user_id_to_fps)))
             for user_id in user_id_to_fps:
                 previous_fingerprint = None
-                print("Number of fingerprints: {:d}".format(len(user_id_to_fps[user_id])))
+                # print("Number of fingerprints: {:d}".format(len(user_id_to_fps[user_id])))
                 for fingerprint in user_id_to_fps[user_id]:
                     if previous_fingerprint is not None:
                         x_row, y_row = compute_similarity_fingerprint(fingerprint, previous_fingerprint, att_ml,
                                                                       train_mode=True)
-                        print(att_ml)
-                        print("Length vector: {:d}".format(len(x_row)))
+                        # print(att_ml)
+                        # print("Length vector: {:d}".format(len(x_row)))
                         X.append(x_row)
                         y.append(y_row)
                     previous_fingerprint = fingerprint
@@ -529,16 +533,23 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                         # print("error")
                         # print(e)
                         pass
+        
+        # dfx = pd.DataFrame(np.array(X))
+        # dfy = pd.DataFrame(np.array(y))
+        # dfx.to_csv("dataX.csv")
+        # dfy.to_csv("datay.csv")
 
         print("Start training model")
         # CHANGE MODEL HERE
         # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
-        model = LogisticRegressionCV()
+        # model = LogisticRegressionCV()
+        model = sklearn_pipeline()
 
         print("Training data: %d" % len(X))
-        model.fit(X, y)
+        print(np.array(X).shape, np.array(y).shape)
+        model.fit(np.array(X), np.array(y))
         print("Model trained")
-        joblib.dump(model, model_path)
+        # joblib.dump(model, model_path)
         print("model saved at: %s" % model_path)
 
     return model
@@ -650,6 +661,8 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
                 data.append(x_row)
                 new_candidates.append(elt)
 
+        # TEMP
+        data = np.array(data)
         if len(new_candidates) > 0:
             predictions_model = model.predict_proba(data)
             predictions_model = 1.0 - predictions_model
