@@ -447,7 +447,7 @@ def load_pipelined_model():
     print("Loaded model")
     return pipeline
 
-def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model", train_round_2=False):
+def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model", train_round_2=True):
     if load:
         # model = joblib.load(model_path)
         model = load_pipelined_model()
@@ -535,7 +535,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
             # we compute negative rows
             for user_id in user_id_to_fps:
                 for fp1 in user_id_to_fps[user_id]:
-                    for _ in range(5):
+                    for _ in range(10):
                         try:
                             compare_with_id = index_to_user_id[random.randint(0, len(index_to_user_id)-1)]
                             compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id])-1)
@@ -546,26 +546,18 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                             # print("success")
                         except Exception as e:
                             pass
-                    #     print("Exception occured")
-                    #     print(e)
-        
-        # dfx = pd.DataFrame(np.array(X))
-        # dfy = pd.DataFrame(np.array(y))
-        # dfx.to_csv("dataX.csv")
-        # dfy.to_csv("datay.csv")
-        # print("AOOGA")
-        # exit()
-
-        print("Start training model")
-        # CHANGE MODEL HERE
-        # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=12)
-        # model = LogisticRegressionCV()
         model = sklearn_pipeline()
 
         print("Training data: %d" % len(X))
-
-        model.fit(np.array(X), np.array(y))
+        X, y = np.array(X), np.array(y)
+        model.fit(X, y)
         print("Model trained")
+
+        if train_round_2:
+            predictions = model.predict_proba(X)[:, 1]
+            loss = y * np.log(predictions) + (1 - y) * np.log(predictions)
+            round_2_train_indices = np.argsort(loss)[:int(len(X) / 5)]
+            model.fit(X[round_2_train_indices], y[round_2_train_indices])
         # joblib.dump(model, model_path)
         save_pipelined_model(model)
 
