@@ -46,8 +46,8 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     print("Length of test set: {:d}".format(len(test_data)))
 
     model, embedding_model = None, None
-    if algo_matching_name in ["hybridalgo", "fullml"]:
-        model = train_ml(fingerprint_dataset, train_data, load=False)
+    if algo_matching_name == "hybridalgo":
+        model = train_ml(fingerprint_dataset, train_data, load=True)
     if algo_matching_name == "deepembedding":
         embedding_model = train_siamese(fingerprint_dataset, train_data, load=False)
 
@@ -56,7 +56,7 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     algo_name_to_function = {
         "eckersley": simple_eckersley,
         "rulebased": rule_based,
-        "hybridalgo": partial(ml_based, model=model, lambda_threshold=0.05),
+        "hybridalgo": partial(ml_based, model=model, lambda_threshold=0.864),
         "deepembedding": partial(embedding_based, model=embedding_model, lambda_threshold=0.1)
     }
     algo_matching = algo_name_to_function[algo_matching_name]

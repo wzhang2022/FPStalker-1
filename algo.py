@@ -433,10 +433,24 @@ def compute_similarity_fingerprint(fp1, fp2, attributes, train_mode = False):
 
     return np.asarray(similarity_vector[1:]), np.asarray(similarity_vector[0])
 
+def save_pipelined_model(pipeline):
+    pipeline.named_steps['estimator'].model.save("keras_model.h5")
+    temp = pipeline.named_steps['estimator'].model
+    pipeline.named_steps['estimator'].model = None
+    joblib.dump(pipeline, 'sklearn_pipeline.pkl')
+    pipeline.named_steps['estimator'].model = temp
+    print("model saved at: sklearn_pipeline.pkl | keras_model.h5")
+
+def load_pipelined_model():
+    pipeline = joblib.load("sklearn_pipeline.pkl")
+    pipeline.named_steps['estimator'].model = tf.keras.models.load_model('keras_model.h5')
+    print("Loaded model")
+    return pipeline
 
 def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model"):
     if load:
-        model = joblib.load(model_path)
+        # model = joblib.load(model_path)
+        model = load_pipelined_model()
     else:
         counter_to_fingerprint = dict()
         index_to_user_id = dict()
@@ -492,6 +506,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         # we generate multiple replay sequences on train data with different visit frequencies
         # to generate more diverse training data
         print("Start generating training data")
+        X, y = [], []
         for visit_frequency in range(1, 10):
             print(visit_frequency)
             train_replay_sequence = generate_replay_sequence(train_data, visit_frequency)
@@ -504,7 +519,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                     user_id_to_fps[fingerprint.getId()] = []
                 user_id_to_fps[fingerprint.getId()].append(fingerprint)
             # we generate the training data
-            X, y = [], []
+            # X, y = [], []
             # print("Number of user id: {:d}".format(len(user_id_to_fps)))
             for user_id in user_id_to_fps:
                 previous_fingerprint = None
@@ -544,7 +559,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
 
         print("Start training model")
         # CHANGE MODEL HERE
-        # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
+        # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=12)
         # model = LogisticRegressionCV()
         model = sklearn_pipeline()
 
@@ -553,7 +568,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         model.fit(np.array(X), np.array(y))
         print("Model trained")
         # joblib.dump(model, model_path)
-        print("model saved at: %s" % model_path)
+        save_pipelined_model(model)
 
     return model
 
@@ -681,7 +696,7 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
             nearest = nearest[:max_nearest]
 
             diff_enough = True
-            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba + 0.1: # 0.1 = diff parameter
+            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba: # 0.1 = diff parameter
                 diff_enough = False
 
             if diff_enough and predictions_model[nearest[0], 0] > lambda_threshold and candidates_have_same_id(
@@ -818,6 +833,7 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
             index += 1
 
     print("Start generating training data")
+    X, y = [], []
     for visit_frequency in range(1, 10):
         print(visit_frequency)
         train_replay_sequence = generate_replay_sequence(train_data, visit_frequency)
@@ -831,7 +847,7 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
             user_id_to_fps[fingerprint.getId()].append(fingerprint)
 
         # we generate the training data
-        X, y = [], []
+        # X, y = [], []
         attributes = sorted(fingerprint_dataset[0].val_attributes.keys())
         for user_id in user_id_to_fps:
             previous_fingerprint = None
@@ -857,9 +873,9 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
                     # print("error")
                     pass
 
-    model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
+    # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
     # model = LogisticRegressionCV(max_iter = 10000)
-    # model = sklearn_pipeline()
+    model = sklearn_pipeline()
     print("Training data: %d" % len(X))
     model.fit(X, y)
     print("Finished training")
@@ -913,7 +929,7 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
         if distance < min_distance:
             min_indice = i
             min_distance = distance
-            
+
     print("best point")
     print("%f, %f, %f" % (fpr[min_indice], tpr[min_indice], thresholds[min_indice]))
     plt.figure()
