@@ -434,7 +434,7 @@ def compute_similarity_fingerprint(fp1, fp2, attributes, train_mode = False):
     return np.asarray(similarity_vector[1:]), np.asarray(similarity_vector[0])
 
 
-def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model"):
+def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model", train_round_2=False):
     if load:
         model = joblib.load(model_path)
     else:
@@ -491,7 +491,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         # just to simplify negative comparisons later
         # we generate multiple replay sequences on train data with different visit frequencies
         # to generate more diverse training data
-        print("Start generating training data")
+        print("Train round 1")
+        X, y = [], []
         for visit_frequency in range(1, 10):
             print(visit_frequency)
             train_replay_sequence = generate_replay_sequence(train_data, visit_frequency)
@@ -503,8 +504,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                 if fingerprint.getId() not in user_id_to_fps:
                     user_id_to_fps[fingerprint.getId()] = []
                 user_id_to_fps[fingerprint.getId()].append(fingerprint)
-            # we generate the training data
-            X, y = [], []
+
             # print("Number of user id: {:d}".format(len(user_id_to_fps)))
             for user_id in user_id_to_fps:
                 previous_fingerprint = None
@@ -556,6 +556,38 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         print("model saved at: %s" % model_path)
 
     return model
+
+
+def get_candidates_from_rules_123(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, forbidden_changes):
+    candidates = []
+    exact_matching = []
+    for user_id in user_id_to_fps:
+        for counter_str in user_id_to_fps[user_id]:
+            counter_known = int(counter_str.split("_")[0])
+            fingerprint_known = counter_to_fingerprint[counter_known]
+
+            # check fingerprint full hash for exact matching
+            if fingerprint_known.hash == fingerprint_unknown.hash:
+                exact_matching.append((counter_str, None, user_id))
+            elif len(exact_matching) < 1 and fingerprint_known.constant_hash == \
+                    fingerprint_unknown.constant_hash:
+                # we make the comparison only if same os/browser/platform
+                if fingerprint_known.val_attributes[Fingerprint.GLOBAL_BROWSER_VERSION] > \
+                        fingerprint_unknown.val_attributes[Fingerprint.GLOBAL_BROWSER_VERSION]:
+                    continue
+
+                forbidden_change_found = False
+                for attribute in forbidden_changes:
+                    if fingerprint_known.val_attributes[attribute] != \
+                            fingerprint_unknown.val_attributes[attribute]:
+                        forbidden_change_found = True
+                        break
+
+                if forbidden_change_found:
+                    continue
+
+                candidates.append((counter_str, None, user_id))
+    return candidates, exact_matching
 
 
 def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model, lambda_threshold):
@@ -616,36 +648,15 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
     att_ml = sorted([x for x in att_ml if x not in not_to_test])
 
     ip_allowed = False
-    candidates = list()
-    exact_matching = list()
+
+
+    # use deterministic rules 1-3 to filter out candidate
+    candidates, exact_matching = get_candidates_from_rules_123(fingerprint_unknown,
+                                                               user_id_to_fps,
+                                                               counter_to_fingerprint,
+                                                               forbidden_changes)
+
     prediction = None
-    for user_id in user_id_to_fps:
-        for counter_str in user_id_to_fps[user_id]:
-            counter_known = int(counter_str.split("_")[0])
-            fingerprint_known = counter_to_fingerprint[counter_known]
-
-            # check fingerprint full hash for exact matching
-            if fingerprint_known.hash == fingerprint_unknown.hash:
-                exact_matching.append((counter_str, None, user_id))
-            elif len(exact_matching) < 1 and fingerprint_known.constant_hash == \
-                    fingerprint_unknown.constant_hash:
-                # we make the comparison only if same os/browser/platform
-                if fingerprint_known.val_attributes[Fingerprint.GLOBAL_BROWSER_VERSION] > \
-                        fingerprint_unknown.val_attributes[Fingerprint.GLOBAL_BROWSER_VERSION]:
-                    continue
-
-                forbidden_change_found = False
-                for attribute in forbidden_changes:
-                    if fingerprint_known.val_attributes[attribute] != \
-                            fingerprint_unknown.val_attributes[attribute]:
-                        forbidden_change_found = True
-                        break
-
-                if forbidden_change_found:
-                    continue
-
-                candidates.append((counter_str, None, user_id))
-
     if len(exact_matching) > 0:
         if len(exact_matching) == 1 or candidates_have_same_id(exact_matching):
             return exact_matching[0][2]
@@ -1468,6 +1479,7 @@ def benchmark_parallel_f_ml(fn, cur, nb_fps_query, nb_cores):
             np.percentile(times, 50),
             np.percentile(times, 75)
             )
+
 
 def benchmark_parallel_f_rules(fn, cur, nb_fps_query, nb_cores):
     NB_PROCESSES = nb_cores
