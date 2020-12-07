@@ -447,7 +447,7 @@ def load_pipelined_model():
     print("Loaded model")
     return pipeline
 
-def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model", train_round_2=True):
+def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model", train_round_2=True, model_type="neuralnetwork"):
     if load:
         # model = joblib.load(model_path)
         model = load_pipelined_model()
@@ -546,7 +546,12 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                             # print("success")
                         except Exception as e:
                             pass
-        model = sklearn_pipeline()
+        if model_type == "neuralnetwork":
+            model = sklearn_pipeline()
+        elif model_type == "randomforest":
+            model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=12)
+        elif model_type == "logistic":
+            model = LogisticRegressionCV()
 
         print("Training data: %d" % len(X))
         X, y = np.array(X), np.array(y)
@@ -596,7 +601,7 @@ def get_candidates_from_rules_123(fingerprint_unknown, user_id_to_fps, counter_t
     return candidates, exact_matching
 
 
-def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model, lambda_threshold):
+def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model, lambda_threshold, diff):
     forbidden_changes = [
         Fingerprint.LOCAL_JS,
         Fingerprint.DNT_JS,
@@ -698,7 +703,7 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
             nearest = nearest[:max_nearest]
 
             diff_enough = True
-            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba: # 0.1 = diff parameter
+            if second_proba is not None and predictions_model[nearest[0], 0] < second_proba + diff: # 0.1 = diff parameter
                 diff_enough = False
 
             if diff_enough and predictions_model[nearest[0], 0] > lambda_threshold and candidates_have_same_id(

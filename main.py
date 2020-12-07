@@ -8,6 +8,7 @@ from algo import benchmark_parallel_f_ml, benchmark_parallel_f_rules, parallel_p
 import MySQLdb as mdb
 from functools import partial
 from embedding_algo import train_siamese, embedding_based
+import argparse
 
 # Modes to run main.py
 CONSISTENT_IDS = "getids"
@@ -32,7 +33,7 @@ def fetch_consistent_user_ids(cur):
             f.write(user_id + "\n")
 
 
-def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
+def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints, lambda_threshold, diff, model_type, train_round_2):
     exp_name += "-%s-%d" % (algo_matching_name, nb_min_fingerprints)
 
     attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
@@ -47,7 +48,7 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
 
     model, embedding_model = None, None
     if algo_matching_name == "hybridalgo":
-        model = train_ml(fingerprint_dataset, train_data, load=True)
+        model = train_ml(fingerprint_dataset, train_data, load=True, train_round_2=train_round_2, model_type=model_type)
     if algo_matching_name == "deepembedding":
         embedding_model = train_siamese(fingerprint_dataset, train_data, load=False)
 
@@ -56,7 +57,7 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     algo_name_to_function = {
         "eckersley": simple_eckersley,
         "rulebased": rule_based,
-        "hybridalgo": partial(ml_based, model=model, lambda_threshold=0.864),
+        "hybridalgo": partial(ml_based, model=model, lambda_threshold=lambda_threshold, diff=diff),
         "deepembedding": partial(embedding_based, model=embedding_model, lambda_threshold=0.1)
     }
     algo_matching = algo_name_to_function[algo_matching_name]
@@ -152,14 +153,16 @@ def benchmark_rules(cur, prefix_files, nb_cores, nb_processes=[1, 2, 4, 8, 16, 2
                     p25,
                     p75
                 ))
-def main(argv):
+
+
+def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net"):
     con = mdb.connect(host="127.0.0.1", port=3306, user="stalker", passwd="baddy", db="canvas_fp_project")
     cur = con.cursor(mdb.cursors.DictCursor)
     if argv[0] == CONSISTENT_IDS:
         fetch_consistent_user_ids(cur)
     elif argv[0] == AUTOMATE_REPLAYS:
         # argv[2] can be "eckersley", "rulebased", "hybridalgo", "deepembedding"
-        automate_replays(cur, argv[1], argv[2], int(argv[3]))
+        automate_replays(cur, argv[1], argv[2], int(argv[3]), lambda_threshold=lambda_threshold, diff=diff, model_type=model_type)
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
     elif argv[0] == BENCHMARK_ML:
@@ -168,4 +171,6 @@ def main(argv):
         benchmark_rules(cur, argv[1], int(argv[2]))
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    # model_type: "neuralnetwork", "randomforest", "logistic"
+    main(["auto", "experiment", "hybrid", "6"], lambda_threshold=0.2, diff=0.1, model_type="neuralnet", train_round_2=False)
+    main(["auto", "experiment2", "hybrid", "6"], lambda_threshold=0.1, diff=0.1, model_type="neuralnet", train_round_2=True)
