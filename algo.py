@@ -535,16 +535,17 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
             # we compute negative rows
             for user_id in user_id_to_fps:
                 for fp1 in user_id_to_fps[user_id]:
-                    try:
-                        compare_with_id = index_to_user_id[random.randint(0, len(index_to_user_id)-1)]
-                        compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id])-1)
-                        fp2 = user_id_to_fps[compare_with_id][compare_with_fp]
-                        x_row, y_row = compute_similarity_fingerprint(fp1, fp2, att_ml, train_mode=True)
-                        X.append(x_row)
-                        y.append(y_row)
-                        # print("success")
-                    except Exception as e:
-                        pass
+                    for _ in range(5):
+                        try:
+                            compare_with_id = index_to_user_id[random.randint(0, len(index_to_user_id)-1)]
+                            compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id])-1)
+                            fp2 = user_id_to_fps[compare_with_id][compare_with_fp]
+                            x_row, y_row = compute_similarity_fingerprint(fp1, fp2, att_ml, train_mode=True)
+                            X.append(x_row)
+                            y.append(y_row)
+                            # print("success")
+                        except Exception as e:
+                            pass
                     #     print("Exception occured")
                     #     print(e)
         
