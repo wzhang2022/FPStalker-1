@@ -7,6 +7,7 @@ from utils import get_consistent_ids, get_fingerprints_experiments
 from algo import benchmark_parallel_f_ml, benchmark_parallel_f_rules, parallel_pipe_task_ml_f, parallel_pipe_task_rules_f
 import MySQLdb as mdb
 from functools import partial
+from embedding_algo import train_siamese, embedding_based
 
 # Modes to run main.py
 CONSISTENT_IDS = "getids"
@@ -44,15 +45,19 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     print("Fetched %d fingerprints." % len(fingerprint_dataset))
     print("Length of test set: {:d}".format(len(test_data)))
 
-        
-    if algo_matching_name == "hybridalgo":
+    model, embedding_model = None
+    if algo_matching_name == "hybrid_algo":
         model = train_ml(fingerprint_dataset, train_data, load=False)
+    if algo_matching_name == "deepembedding":
+        embedding_model = train_siamese(fingerprint_dataset, train_data, load=False)
+
 
     # select the right algorithm
     algo_name_to_function = {
         "eckersley": simple_eckersley,
         "rulebased": rule_based,
-        "hybridalgo": partial(ml_based, model=model, lambda_threshold=0.1)
+        "hybridalgo": partial(ml_based, model=model, lambda_threshold=0.1),
+        "deepembedding": partial(embedding_based, model=embedding_model, lambda_threshold=0.1)
     }
     algo_matching = algo_name_to_function[algo_matching_name]
 
@@ -153,7 +158,7 @@ def main(argv):
     if argv[0] == CONSISTENT_IDS:
         fetch_consistent_user_ids(cur)
     elif argv[0] == AUTOMATE_REPLAYS:
-        # argv[2] can be "eckersley", "rulebased", or "hybridalgo"
+        # argv[2] can be "eckersley", "rulebased", "hybridalgo", "deepembedding"
         automate_replays(cur, argv[1], argv[2], int(argv[3]))
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
@@ -161,8 +166,6 @@ def main(argv):
         benchmark_ml(cur, argv[1], int(argv[2]))
     elif argv[0] == BENCHMARK_RULES:
         benchmark_rules(cur, argv[1], int(argv[2]))
-    elif argv[0] == AUTO_DEEP_EMBEDDING:
-        automate_ml_embedding(cur, argv[1], int(argv[2]))
 
 if __name__ == "__main__":
     main(sys.argv[1:])
