@@ -391,7 +391,7 @@ def generateHeader(attributes):
     return header
 
 
-def compute_similarity_fingerprint(fp1, fp2, attributes, train_mode):
+def compute_similarity_fingerprint(fp1, fp2, attributes, train_mode = False):
     similarity_vector = []
     flash_activated = fp1.hasFlashActivated() and fp2.hasFlashActivated()
     nb_changes = 0
@@ -503,7 +503,6 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                 if fingerprint.getId() not in user_id_to_fps:
                     user_id_to_fps[fingerprint.getId()] = []
                 user_id_to_fps[fingerprint.getId()].append(fingerprint)
-
             # we generate the training data
             X, y = [], []
             # print("Number of user id: {:d}".format(len(user_id_to_fps)))
@@ -532,9 +531,9 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                         y.append(y_row)
                         # print("success")
                     except Exception as e:
-                        # print("error")
-                        # print(e)
                         pass
+                    #     print("Exception occured")
+                    #     print(e)
         
         # dfx = pd.DataFrame(np.array(X))
         # dfy = pd.DataFrame(np.array(y))
@@ -693,7 +692,6 @@ def ml_based(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint, model,
         prediction = generate_new_id()
 
     return prediction
-
 
 def load_scenario_result(filename):
     """
@@ -859,8 +857,9 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
                     # print("error")
                     pass
 
-    model = RandomForestClassifier(n_jobs=4)
+    model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
     # model = LogisticRegressionCV(max_iter = 10000)
+    # model = sklearn_pipeline()
     print("Training data: %d" % len(X))
     model.fit(X, y)
     print("Finished training")
@@ -889,6 +888,7 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
                     x_rows.append(x_row)
                     y_true.append(1)
                 previous_fingerprint = fingerprint
+        
 
         for user_id in user_id_to_fps:
             for fp1 in user_id_to_fps[user_id]:
@@ -896,10 +896,10 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
                     compare_with_id = index_to_user_id[random.randint(0, len(user_id_to_fps))]
                     compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id]))
                     fp2 = user_id_to_fps[compare_with_id][compare_with_fp]
-                    x_row, y_row = compute_similarity_fingerprint(fp1, fp2, attributes)
+                    x_row, y_row = compute_similarity_fingerprint(fp1, fp2, attributes, True)
                     x_rows.append(x_row)
                     y_true.append(0)
-                except:
+                except Exception as e:
                     pass
         predictions = model.predict_proba(x_rows)
         for prediction in predictions:
@@ -913,7 +913,7 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
         if distance < min_distance:
             min_indice = i
             min_distance = distance
-
+            
     print("best point")
     print("%f, %f, %f" % (fpr[min_indice], tpr[min_indice], thresholds[min_indice]))
     plt.figure()
