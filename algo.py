@@ -9,11 +9,13 @@ from fingerprint import Fingerprint
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 from multiprocessing import Pool, Pipe
 from newmodels import sklearn_pipeline
 import time
 import pandas as pd
+import tensorflow as tf
 
 results = []
 
@@ -473,7 +475,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                            # Fingerprint.RENDERER
                            ])
 
-        not_to_test = set()
+        # not_to_test = set()
 
         att_ml = set(fingerprint_dataset[0].val_attributes.keys())
         att_ml = sorted([x for x in att_ml if x not in not_to_test])
@@ -538,6 +540,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         # dfy = pd.DataFrame(np.array(y))
         # dfx.to_csv("dataX.csv")
         # dfy.to_csv("datay.csv")
+        # print("AOOGA")
+        # exit()
 
         print("Start training model")
         # CHANGE MODEL HERE
@@ -546,7 +550,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         model = sklearn_pipeline()
 
         print("Training data: %d" % len(X))
-        print(np.array(X).shape, np.array(y).shape)
+
         model.fit(np.array(X), np.array(y))
         print("Model trained")
         # joblib.dump(model, model_path)

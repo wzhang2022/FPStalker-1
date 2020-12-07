@@ -40,11 +40,12 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints):
     print("Begin automation of scenarios")
     print("Start fetching fingerprints...")
     fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
-    train_data, test_data = split_data(1, fingerprint_dataset)
+    train_data, test_data = split_data(0.4, fingerprint_dataset)
     print("Fetched %d fingerprints." % len(fingerprint_dataset))
     print("Length of test set: {:d}".format(len(test_data)))
 
-    if algo_matching_name == "hybrid_algo":
+        
+    if algo_matching_name == "hybridalgo":
         model = train_ml(fingerprint_dataset, train_data, load=False)
 
     # select the right algorithm
