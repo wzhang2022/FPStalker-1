@@ -157,14 +157,15 @@ def benchmark_rules(cur, prefix_files, nb_cores, nb_processes=[1, 2, 4, 8, 16, 2
                 ))
 
 
-def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", train_round_2=True, load=False):
+def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", model_path="./saved_models/default_model_location", train_round_2=True, load=False):
     con = mdb.connect(host="127.0.0.1", port=3306, user="stalker", passwd="baddy", db="canvas_fp_project")
     cur = con.cursor(mdb.cursors.DictCursor)
     if argv[0] == CONSISTENT_IDS:
         fetch_consistent_user_ids(cur)
     elif argv[0] == AUTOMATE_REPLAYS:
         # argv[2] can be "eckersley", "rulebased", "hybridalgo", "deepembedding"
-        automate_replays(cur, argv[1], argv[2], int(argv[3]), lambda_threshold=lambda_threshold, diff=diff, model_type=model_type, train_round_2=train_round_2, load=load)
+        automate_replays(cur, argv[1], argv[2], int(argv[3]), lambda_threshold=lambda_threshold, diff=diff,
+                         model_type=model_type, model_path=model_path, train_round_2=train_round_2, load=load)
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
     elif argv[0] == BENCHMARK_ML:
