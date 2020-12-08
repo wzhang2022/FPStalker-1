@@ -33,7 +33,8 @@ def fetch_consistent_user_ids(cur):
             f.write(user_id + "\n")
 
 
-def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints, lambda_threshold, diff, model_type, train_round_2):
+def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints, lambda_threshold, diff, model_type,
+                     model_path, train_round_2, load):
     exp_name += "-%s-%d" % (algo_matching_name, nb_min_fingerprints)
 
     attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
@@ -48,7 +49,8 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints, lam
 
     model, embedding_model = None, None
     if algo_matching_name == "hybridalgo":
-        model = train_ml(fingerprint_dataset, train_data, load=True, train_round_2=train_round_2, model_type=model_type)
+        model = train_ml(fingerprint_dataset, train_data, load=load, train_round_2=train_round_2,
+                         model_type=model_type, model_path=model_path)
     if algo_matching_name == "deepembedding":
         embedding_model = train_siamese(fingerprint_dataset, train_data, load=False)
 
@@ -155,14 +157,14 @@ def benchmark_rules(cur, prefix_files, nb_cores, nb_processes=[1, 2, 4, 8, 16, 2
                 ))
 
 
-def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", train_round_2=True):
+def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", train_round_2=True, load=False):
     con = mdb.connect(host="127.0.0.1", port=3306, user="stalker", passwd="baddy", db="canvas_fp_project")
     cur = con.cursor(mdb.cursors.DictCursor)
     if argv[0] == CONSISTENT_IDS:
         fetch_consistent_user_ids(cur)
     elif argv[0] == AUTOMATE_REPLAYS:
         # argv[2] can be "eckersley", "rulebased", "hybridalgo", "deepembedding"
-        automate_replays(cur, argv[1], argv[2], int(argv[3]), lambda_threshold=lambda_threshold, diff=diff, model_type=model_type, train_round_2=train_round_2)
+        automate_replays(cur, argv[1], argv[2], int(argv[3]), lambda_threshold=lambda_threshold, diff=diff, model_type=model_type, train_round_2=train_round_2, load=load)
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur)
     elif argv[0] == BENCHMARK_ML:
@@ -172,5 +174,7 @@ def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", train_ro
 
 if __name__ == "__main__":
     # model_type: "neuralnetwork", "randomforest", "logistic"
-    main(["auto", "experiment", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet", train_round_2=False)
-    main(["auto", "experiment2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet", train_round_2=True)
+    main(["auto", "experiment", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
+         model_path="./saved_models/nn_trained_round_1", train_round_2=False, load=False)
+    main(["auto", "experiment2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
+         model_path="./saved_models/nn_trained_round_2", train_round_2=True, load=False)

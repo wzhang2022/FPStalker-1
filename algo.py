@@ -546,12 +546,14 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                             # print("success")
                         except Exception as e:
                             pass
-        if model_type == "neuralnetwork":
+        if model_type == "neuralnet":
             model = sklearn_pipeline()
         elif model_type == "randomforest":
             model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=12)
         elif model_type == "logistic":
             model = LogisticRegressionCV()
+        else:
+            print("bad model input")
 
         print("Training data: %d" % len(X))
         X, y = np.array(X), np.array(y)
