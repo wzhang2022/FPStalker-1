@@ -561,6 +561,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         print("Model trained")
 
         if train_round_2:
+            print("Train round 2")
             predictions = model.predict_proba(X)[:, 1]
             loss = y * np.log(predictions) + (1 - y) * np.log(predictions)
             round_2_train_indices = np.argsort(loss)[:int(len(X) / 5)]

@@ -174,7 +174,7 @@ def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", model_pa
         benchmark_rules(cur, argv[1], int(argv[2]))
 
 if __name__ == "__main__":
-    # model_type: "neuralnetwork", "randomforest", "logistic"
+    # model_type: "neuralnet", "randomforest", "logistic"
     main(["auto", "experiment", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
          model_path="./saved_models/nn_trained_round_1", train_round_2=False, load=False)
     main(["auto", "experiment2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
