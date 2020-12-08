@@ -74,9 +74,10 @@ def sklearn_pipeline():
 
     # wrap the model using the function you created
     clf = KerasClassifier(build_fn=create_model,
-                            verbose=1,
+                            verbose=0,
                             epochs = 400,
-                            validation_split = 0.2)
+                            validation_split = 0.2,
+                            callbacks=[lrreduce, es])
 
     # just create the pipeline
     pipeline = Pipeline([
