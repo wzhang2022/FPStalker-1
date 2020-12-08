@@ -16,6 +16,7 @@ from newmodels import sklearn_pipeline
 import time
 import pandas as pd
 import tensorflow as tf
+import string
 
 results = []
 
@@ -1505,7 +1506,11 @@ def benchmark_parallel_f_rules(fn, cur, nb_fps_query, nb_cores):
     random.seed(seed)
     nb_fps_query = int(nb_fps_query / 50)
 
+    cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme LIMIT 0," + str(nb_fps_query))
     fps = cur.fetchall()
+
+    attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
+                 Fingerprint.JAVASCRIPT_ATTRIBUTES + Fingerprint.FLASH_ATTRIBUTES
 
     tmp_fp = Fingerprint(attributes, fps[40])
 
