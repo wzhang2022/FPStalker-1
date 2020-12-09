@@ -433,24 +433,33 @@ def compute_similarity_fingerprint(fp1, fp2, attributes, train_mode = False):
 
     return np.asarray(similarity_vector[1:]), np.asarray(similarity_vector[0])
 
-def save_pipelined_model(pipeline):
-    pipeline.named_steps['estimator'].model.save("keras_model.h5")
+def save_pipelined_model(pipeline, model_path, model_type):
+    if model_type != 'neuralnet':
+        joblib.dump(pipeline, model_path)
+        print("model saved at: " + model_path)
+        return
+
+    pipeline.named_steps['estimator'].model.save(model_path + ".h5")
     temp = pipeline.named_steps['estimator'].model
     pipeline.named_steps['estimator'].model = None
-    joblib.dump(pipeline, 'sklearn_pipeline.pkl')
+    joblib.dump(pipeline, model_path + '.pkl')
     pipeline.named_steps['estimator'].model = temp
-    print("model saved at: sklearn_pipeline.pkl | keras_model.h5")
+    print("model saved at: " + model_path)
 
-def load_pipelined_model():
-    pipeline = joblib.load("sklearn_pipeline.pkl")
-    pipeline.named_steps['estimator'].model = tf.keras.models.load_model('keras_model.h5')
+def load_pipelined_model(model_path, model_type):
+    if model_type != 'neuralnet':
+        model = joblib.load(model_path)
+        print("Loaded model")
+        return model
+    pipeline = joblib.load(model_path + ".pkl")
+    pipeline.named_steps['estimator'].model = tf.keras.models.load_model(model_path + '.h5')
     print("Loaded model")
     return pipeline
 
 def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_ml_model", train_round_2=True, model_type="neuralnetwork"):
     if load:
         # model = joblib.load(model_path)
-        model = load_pipelined_model()
+        model = load_pipelined_model(model_path, model_type)
     else:
         counter_to_fingerprint = dict()
         index_to_user_id = dict()
@@ -535,7 +544,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
             # we compute negative rows
             for user_id in user_id_to_fps:
                 for fp1 in user_id_to_fps[user_id]:
-                    for _ in range(10):
+                    for _ in range(20):
                         try:
                             compare_with_id = index_to_user_id[random.randint(0, len(index_to_user_id)-1)]
                             compare_with_fp = random.randint(0, len(user_id_to_fps[compare_with_id])-1)
@@ -567,7 +576,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
             round_2_train_indices = np.argsort(loss)[:int(len(X) / 5)]
             model.fit(X[round_2_train_indices], y[round_2_train_indices])
         # joblib.dump(model, model_path)
-        save_pipelined_model(model)
+        save_pipelined_model(model, model_path, model_type)
 
     return model
 
@@ -830,10 +839,46 @@ def compute_distance_top_left(tpr, fp):
     return (0 - fp) * (0 - fp) + (1 - tpr) * (1 - tpr)
 
 
-def optimize_lambda(fingerprint_dataset, train_data, test_data):
+def optimize_lambda(fingerprint_dataset, train_data, test_data, model_path, model_type):
     counter_to_fingerprint = dict()
     index_to_user_id = dict()
     user_ids = set()
+
+    not_to_test = set([Fingerprint.PLATFORM_FLASH,
+                           Fingerprint.PLATFORM_INCONSISTENCY,
+                           Fingerprint.PLATFORM_JS,
+                           Fingerprint.PLUGINS_JS_HASHED,
+                           Fingerprint.SESSION_JS,
+                           Fingerprint.IE_DATA_JS,
+                           Fingerprint.ADDRESS_HTTP,
+                           Fingerprint.BROWSER_FAMILY,
+                           Fingerprint.COOKIES_JS,
+                           Fingerprint.DNT_JS,
+                           Fingerprint.END_TIME,
+                           Fingerprint.FONTS_FLASH_HASHED,
+                           Fingerprint.GLOBAL_BROWSER_VERSION,
+                           Fingerprint.LANGUAGE_FLASH,
+                           Fingerprint.LANGUAGE_INCONSISTENCY,
+                           Fingerprint.LOCAL_JS,
+                           Fingerprint.MINOR_BROWSER_VERSION,
+                           Fingerprint.MAJOR_BROWSER_VERSION,
+                           Fingerprint.NB_FONTS,
+                           Fingerprint.NB_PLUGINS,
+                           Fingerprint.COUNTER,
+                           Fingerprint.OS,
+                           Fingerprint.HOST_HTTP,
+                           Fingerprint.ACCEPT_HTTP,
+                           Fingerprint.CONNECTION_HTTP,
+                           Fingerprint.ENCODING_HTTP,
+                           Fingerprint.RESOLUTION_FLASH,
+                           # Fingerprint.TIMEZONE_JS,
+                           Fingerprint.VENDOR,
+                           # Fingerprint.RENDERER
+                           ])
+
+    att_ml = set(fingerprint_dataset[0].val_attributes.keys())
+    att_ml = sorted([x for x in att_ml if x not in not_to_test])
+
     index = 0
     for fingerprint in fingerprint_dataset:
         counter_to_fingerprint[fingerprint.getCounter()] = fingerprint
@@ -858,7 +903,8 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
 
         # we generate the training data
         # X, y = [], []
-        attributes = sorted(fingerprint_dataset[0].val_attributes.keys())
+        attributes = att_ml
+        # attributes = sorted(fingerprint_dataset[0].val_attributes.keys())
         for user_id in user_id_to_fps:
             previous_fingerprint = None
             for fingerprint in user_id_to_fps[user_id]:
@@ -885,10 +931,11 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
 
     # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
     # model = LogisticRegressionCV(max_iter = 10000)
-    model = sklearn_pipeline()
-    print("Training data: %d" % len(X))
-    model.fit(X, y)
-    print("Finished training")
+    # model = sklearn_pipeline()
+    # print("Training data: %d" % len(X))
+    # model.fit(X, y)
+    # print("Finished training")
+    model = load_pipelined_model(model_path, model_type)
 
     y_true = []
     y_scores = []
@@ -904,7 +951,8 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data):
                 user_id_to_fps[fingerprint.getId()] = []
             user_id_to_fps[fingerprint.getId()].append(fingerprint)
 
-        attributes = sorted(fingerprint_dataset[0].val_attributes.keys())
+        # attributes = sorted(fingerprint_dataset[0].val_attributes.keys())
+        attributes = att_ml
         x_rows = []
         for user_id in user_id_to_fps:
             previous_fingerprint = None

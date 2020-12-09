@@ -81,7 +81,7 @@ def automate_ml_embedding(cur, exp_name, nb_min_fingerprints):
 
 
 
-def optimize_lambda_main_call(cur):
+def optimize_lambda_main_call(cur, model_path, model_type):
     attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
                  Fingerprint.JAVASCRIPT_ATTRIBUTES + Fingerprint.FLASH_ATTRIBUTES
 
@@ -90,7 +90,7 @@ def optimize_lambda_main_call(cur):
     fingerprint_dataset = get_fingerprints_experiments(cur, nb_min_fingerprints, attributes)
     print("Fetched %d fingerprints." % len(fingerprint_dataset))
     train_data, test_data = split_data(0.4, fingerprint_dataset)
-    optimize_lambda(fingerprint_dataset, train_data, test_data)
+    optimize_lambda(fingerprint_dataset, train_data, test_data, model_path, model_type)
 
 
 def benchmark_ml(cur, prefix_files, nb_cores):
@@ -167,7 +167,7 @@ def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", model_pa
         automate_replays(cur, argv[1], argv[2], int(argv[3]), lambda_threshold=lambda_threshold, diff=diff,
                          model_type=model_type, model_path=model_path, train_round_2=train_round_2, load=load)
     elif argv[0] == OPTIMIZE_LAMBDA:
-        optimize_lambda_main_call(cur)
+        optimize_lambda_main_call(cur, model_path, model_type)
     elif argv[0] == BENCHMARK_ML:
         benchmark_ml(cur, argv[1], int(argv[2]))
     elif argv[0] == BENCHMARK_RULES:
@@ -175,7 +175,15 @@ def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", model_pa
 
 if __name__ == "__main__":
     # model_type: "neuralnet", "randomforest", "logistic"
-    main(["auto", "experiment", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
-         model_path="./saved_models/nn_trained_round_1", train_round_2=False, load=False)
-    main(["auto", "experiment2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
-         model_path="./saved_models/nn_trained_round_2", train_round_2=True, load=False)
+    # main(["auto", "issame", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
+    #      model_path="./saved_models/nn_batch_norm", train_round_2=False, load=True)
+    # main(["auto", "wBatchNorm2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
+    #      model_path="./saved_models/nn_trained_round_2", train_round_2=True, load=False)
+
+    # Optimize lamdba
+    # main(["lambda", "optim", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
+    #      model_path="./saved_models/nn_trained_round_2", train_round_2=False, load=True)
+
+    # Try optimized lambda
+    main(["auto", "bnorm2lam0", "hybridalgo", "6"], lambda_threshold=0, diff=0.0, model_type="neuralnet",
+         model_path="./saved_models/nn_trained_round_2", train_round_2=False, load=True)

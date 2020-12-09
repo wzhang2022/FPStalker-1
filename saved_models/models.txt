@@ -1,0 +1,7 @@
+nn_batch_norm for_loop(20) epochs 40
+
+nn_trained_round_1 for_loop(10) epochs 40
+
+nn_trained_round_2 wills magic
+
+nn_batch_norm100 for_loop(20) epochs 100
