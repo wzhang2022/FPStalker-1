@@ -17,6 +17,7 @@ import time
 import pandas as pd
 import tensorflow as tf
 import string
+from copy import copy
 
 results = []
 
@@ -513,6 +514,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         # to generate more diverse training data
         print("Train round 1")
         X, y = [], []
+        pos_examples = []
+        pos_examples_y = []
         for visit_frequency in range(1, 10):
             print(visit_frequency)
             train_replay_sequence = generate_replay_sequence(train_data, visit_frequency)
@@ -537,7 +540,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                         X.append(x_row)
                         y.append(y_row)
                     previous_fingerprint = fingerprint
-
+            pos_examples = copy(x)
+            pos_examples_y = copy(y)
             # we compute negative rows
             for user_id in user_id_to_fps:
                 for fp1 in user_id_to_fps[user_id]:
@@ -571,7 +575,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
             predictions = model.predict_proba(X)[:, 1]
             loss = y * np.log(predictions) + (1 - y) * np.log(predictions)
             round_2_train_indices = np.argsort(loss)[:int(len(X) / 5)]
-            model.fit(X[round_2_train_indices], y[round_2_train_indices])
+            model.fit(np.array(list(X[round_2_train_indices]) + pos_examples), np.array(list(y[round_2_train_indices]) + pos_examples_y))
         # joblib.dump(model, model_path)
         save_pipelined_model(model)
 
