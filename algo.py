@@ -16,6 +16,8 @@ from newmodels import sklearn_pipeline
 import time
 import pandas as pd
 import tensorflow as tf
+import string
+from copy import copy
 
 results = []
 
@@ -96,6 +98,11 @@ def candidates_have_same_id(candidate_list):
     """
     if len(candidate_list) == 0:
         return False
+    if len(candidate_list[0]) == 2:
+        # testing in the benchmark case
+        return not any(not x for x in [y[0] == candidate_list[0][0] for y in candidate_list])
+
+    # testing in the auto training/evaluation case
     return not any(not x for x in [y[2] == candidate_list[0][2] for y in candidate_list])
 
 
@@ -516,6 +523,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         # to generate more diverse training data
         print("Train round 1")
         X, y = [], []
+        pos_examples = []
+        pos_examples_y = []
         for visit_frequency in range(1, 10):
             print(visit_frequency)
             train_replay_sequence = generate_replay_sequence(train_data, visit_frequency)
@@ -540,7 +549,8 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                         X.append(x_row)
                         y.append(y_row)
                     previous_fingerprint = fingerprint
-
+            pos_examples = copy(x)
+            pos_examples_y = copy(y)
             # we compute negative rows
             for user_id in user_id_to_fps:
                 for fp1 in user_id_to_fps[user_id]:
@@ -574,7 +584,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
             predictions = model.predict_proba(X)[:, 1]
             loss = y * np.log(predictions) + (1 - y) * np.log(predictions)
             round_2_train_indices = np.argsort(loss)[:int(len(X) / 5)]
-            model.fit(X[round_2_train_indices], y[round_2_train_indices])
+            model.fit(np.array(list(X[round_2_train_indices]) + pos_examples), np.array(list(y[round_2_train_indices]) + pos_examples_y))
         # joblib.dump(model, model_path)
         save_pipelined_model(model, model_path, model_type)
 
@@ -1553,7 +1563,11 @@ def benchmark_parallel_f_rules(fn, cur, nb_fps_query, nb_cores):
     random.seed(seed)
     nb_fps_query = int(nb_fps_query / 50)
 
+    cur.execute("SELECT *, NULL as canvasJS FROM extensiondatascheme LIMIT 0," + str(nb_fps_query))
     fps = cur.fetchall()
+
+    attributes = Fingerprint.INFO_ATTRIBUTES + Fingerprint.HTTP_ATTRIBUTES + \
+                 Fingerprint.JAVASCRIPT_ATTRIBUTES + Fingerprint.FLASH_ATTRIBUTES
 
     tmp_fp = Fingerprint(attributes, fps[40])
 
