@@ -97,6 +97,11 @@ def candidates_have_same_id(candidate_list):
     """
     if len(candidate_list) == 0:
         return False
+    if len(candidate_list[0]) == 2:
+        # testing in the benchmark case
+        return not any(not x for x in [y[0] == candidate_list[0][0] for y in candidate_list])
+
+    # testing in the auto training/evaluation case
     return not any(not x for x in [y[2] == candidate_list[0][2] for y in candidate_list])
 
 
