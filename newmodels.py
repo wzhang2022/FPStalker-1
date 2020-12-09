@@ -34,21 +34,43 @@ def create_model(optimizer='adagrad',
     #             loss = loss_fn,
     #             metrics = ["accuracy"])
     ############################################
-    model = tf.keras.models.Sequential()
-    model.add(tf.keras.layers.Dense(2, activation = 'relu',
-                                kernel_initializer='random_normal',
-                                bias_initializer='random_normal',
-                                kernel_regularizer = tf.keras.regularizers.l1(0.003)))
-    model.add(tf.keras.layers.BatchNormalization())
+    # model = tf.keras.models.Sequential()
+    # model.add(tf.keras.layers.Dense(2, activation = 'relu',
+    #                             kernel_initializer='random_normal',
+    #                             bias_initializer='random_normal',
+    #                             kernel_regularizer = tf.keras.regularizers.l1(0.003)))
+    # model.add(tf.keras.layers.BatchNormalization())
 
+    # model.add(tf.keras.layers.Dense(1, activation = 'sigmoid'))
+
+    # loss_fn = tf.keras.losses.BinaryCrossentropy()
+    # optimizer = tf.keras.optimizers.Adam(lr = 0.001)
+
+    # model.compile(optimizer = optimizer,
+    #             loss = loss_fn,
+    #             metrics = ["accuracy"])
+
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Dense(100, activation = 'relu',
+                                kernel_initializer='random_normal',
+                                bias_initializer='random_normal'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(0.5))
+    model.add(tf.keras.layers.Dense(100, activation = 'relu',
+                                kernel_initializer='random_normal',
+                                bias_initializer='random_normal'))
+    model.add(tf.keras.layers.BatchNormalization())
+    model.add(tf.keras.layers.Dropout(0.5))
     model.add(tf.keras.layers.Dense(1, activation = 'sigmoid'))
 
     loss_fn = tf.keras.losses.BinaryCrossentropy()
-    optimizer = tf.keras.optimizers.Adam(lr = 0.001)
+    optimizer = tf.keras.optimizers.Adam(lr = 0.0001)
+
 
     model.compile(optimizer = optimizer,
                 loss = loss_fn,
                 metrics = ["accuracy"])
+
     return model
 
 
@@ -56,7 +78,7 @@ def sklearn_pipeline():
     # wrap the model using the function you created
     clf = KerasClassifier(build_fn=create_model,
                             verbose=0,
-                            epochs = 40,
+                            epochs = 100,
                             validation_split = 0.2)
 
     # just create the pipeline

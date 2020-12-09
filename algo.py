@@ -549,7 +549,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
                         X.append(x_row)
                         y.append(y_row)
                     previous_fingerprint = fingerprint
-            pos_examples = copy(x)
+            pos_examples = copy(X)
             pos_examples_y = copy(y)
             # we compute negative rows
             for user_id in user_id_to_fps:
