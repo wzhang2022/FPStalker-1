@@ -175,8 +175,8 @@ def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", model_pa
 
 if __name__ == "__main__":
     # model_type: "neuralnet", "randomforest", "logistic"
-    main(["auto", "nn100x100dp5", "hybridalgo", "6"], lambda_threshold=0.9, diff=0.0, model_type="neuralnet",
-         model_path="./saved_models/nn100x100dp5", train_round_2=False, load=True)
+    main(["auto", "nn100x100dp5wr2", "hybridalgo", "6"], lambda_threshold=0.9, diff=0.0, model_type="neuralnet",
+         model_path="./saved_models/nn100x100dp5wr2", train_round_2=True, load=False)
     # main(["auto", "wBatchNorm2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
     #      model_path="./saved_models/nn_trained_round_2", train_round_2=True, load=False)
 
