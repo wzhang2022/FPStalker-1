@@ -1,4 +1,5 @@
-Repo containing the code of FPStalker's paper.
+This repo is a fork of the code for FPStalker's paper and contains the extensions done by William Zhang, Eryk Pecyna, and Barron Wei for their CS263 final project.
+
 
 # Create virtual environment and install dependencies
 Run the command below to create a virtual environment.
@@ -28,6 +29,16 @@ tar zxvf extension1.txt.tar.gz; tar zxvf extension2.txt.tar.gz; cat extension1.t
 
 Change the connection to the database at the top of the main with your credentials.
 
+We used MySQL community edition with a local server set up. After adding a new schema and table we ran the sql files generated above.
+There are multiple connections and table names to edit in algo.py and main.py so for greater ease of use, use the following specifications.
+
+host="127.0.0.1", port=3306, user="stalker", passwd="baddy", db="canvas_fp_project"
+
+When setting up the SQL server create an administrative user named "stalker" with password "baddy"
+Make sure the schema name is "canvas_fp_project" and the table name is "extensiondatascheme"
+
+Using these specifications should ensure compatibility with the current settings defined in main.py and algo.py.
+
 # Get ids of browser instances with countermeasures
 ```ruby
 python main.py getids
@@ -37,45 +48,25 @@ It generates a file called "consistent_extension_ids.csv" in data folder.
 
 # Launch evaluation process of a linking algorithm
 
-```ruby
-python main.py auto myexpname nameoflinkingalgo 6
-```
+The multiple extensions we added made it easier to move the argument passing into main so we could save some copies of the code to run specific experiments.
 
-Where "myexpname" is the name of your experiment so that it can be used to prefix filenames,
-"nameoflinkingalgo" is either eckersley or rulebased, and 6 must be replaced by the minimum number of fingerprints a browser instance need to be part of the experiment.
+main() takes argv as its first argument. For evaluating a linking algorithm you must put the following call into the end of main.py:
 
-## For the Panopticlick/Eckersley linking algorithm
-```ruby
-python main.py auto myexpname eckersley 6
-```
+main(["auto", experimentname, "hybridalgo", "6"], lambda_threshold=0.994, diff=0.10, model_type="randomforest",
+         model_path="./saved_models/my_ml_model", train_round_2=False, load=True)
 
-## For the rule-based linking algorithm
-```ruby
-python main.py auto myexpname rulebased 6
-```
+where experiment is an arbitrary experiment name. model_path must point to a saved model, the following are the model paths for the models used in our paper:
 
-## For the hybrid linking algorithm
-```ruby
-python main.py automl myexpname 6
-```
-In current state, it loads the random forest model contained in the `data/my_ml_model`.
-It was generated on the conditions specified in the article, i.e. 
-To train a new model, one just needs to change the load parameter of the `train_ml` function (in main) to False.
-In order to optimize the lambda parameter, you just need to launch
-```ruby
-python main.py lambda
-```
+Our neural network:
+"./saved_models/nn100x100dp5"
+
+Original random forest:
+"./saved_models/my_ml_model"
+
+model_type must equal either "randomforest" or "neuralnet"
+
+Lambda threshold and diff are currently set to the parameters defined in FPStalker, for our model they must be (lambda_threshold = 0.9) and (diff=0).
 
 # Benchmark
 
-For the hybrid algorithm:
-
-```ruby
-python automlbench myfilesprefix 4
-```
-Where 4 has to be replaced by the number of cores on your machine.
-
-For the rule-based algorithm:
-```ruby
-python autorulesbench myfilesprefix 4
-```
+Running the evaluation process will print the average time and percentiles for how long it took the model to link two fingerprints.

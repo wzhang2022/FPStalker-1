@@ -315,7 +315,7 @@ def simple_eckersley(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint
 
 
 def replay_scenario(fingerprint_dataset, visit_frequency, link_fingerprint, \
-                    filename="./results/scenario_replay_result.csv", lambda_threshold=None):
+                    filename="./results/scenario_replay_result.csv", lambda_threshold=None, times = []):
     """
         Takes as input the fingerprint dataset,
         the frequency of visit in days,
@@ -339,7 +339,9 @@ def replay_scenario(fingerprint_dataset, visit_frequency, link_fingerprint, \
         counter_to_time[elt[0]] = elt[1]
         counter = int(elt[0].split("_")[0])
         fingerprint_unknown = counter_to_fingerprint[counter]
+        start = time.time()
         assigned_id = link_fingerprint(fingerprint_unknown, user_id_to_fps, counter_to_fingerprint)
+        times.append(time.time() - start)
         fps_available.append((elt[0], assigned_id))
 
         if assigned_id not in user_id_to_fps:
@@ -568,7 +570,7 @@ def train_ml(fingerprint_dataset, train_data, load=True, model_path="./data/my_m
         if model_type == "neuralnet":
             model = sklearn_pipeline()
         elif model_type == "randomforest":
-            model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=12)
+            model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=-1)
         elif model_type == "logistic":
             model = LogisticRegressionCV()
         else:
@@ -939,7 +941,7 @@ def optimize_lambda(fingerprint_dataset, train_data, test_data, model_path, mode
                     # print("error")
                     pass
 
-    # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=4)
+    # model = RandomForestClassifier(n_estimators=10, max_features=3, n_jobs=-1)
     # model = LogisticRegressionCV(max_iter = 10000)
     # model = sklearn_pipeline()
     # print("Training data: %d" % len(X))
@@ -1202,7 +1204,7 @@ def parallel_pipe_task_rules_f(max_diff, nb_cmp_per_id, conn, attributes):
 
     return [float(avg_nb_cmp / total_nb)]
 
-def parallel_pipe_task_ml_f(max_diff, nb_cmp_per_id, conn, attributes):
+def parallel_pipe_task_ml_f(max_diff, nb_cmp_per_id, conn, attributes, model_path, model_type):
     forbidden_changes = [
         Fingerprint.LOCAL_JS,
         Fingerprint.DNT_JS,
@@ -1249,7 +1251,11 @@ def parallel_pipe_task_ml_f(max_diff, nb_cmp_per_id, conn, attributes):
     print("Finished collecting fps")
 
     # Real classification process starts here
-    model = joblib.load('./data/my_ml_model')
+    if model_type == 'randomforest':
+        model = joblib.load(model_path)
+    else:
+        model = load_pipelined_model(model_path, model_type)
+        
     msg = "CONTINUE"
     print("Start classification process")
     avg_nb_cmp = 0
@@ -1368,34 +1374,36 @@ def benchmark_parallel_f_ml(fn, cur, nb_fps_query, nb_cores):
     tmp_fp = Fingerprint(attributes, fps[40])
 
     not_to_test = set([Fingerprint.PLATFORM_FLASH,
-                       Fingerprint.PLATFORM_INCONSISTENCY,
-                       Fingerprint.PLATFORM_JS,
-                       Fingerprint.PLUGINS_JS_HASHED,
-                       Fingerprint.SESSION_JS,
-                       Fingerprint.IE_DATA_JS,
-                       Fingerprint.ADDRESS_HTTP,
-                       Fingerprint.BROWSER_FAMILY,
-                       Fingerprint.COOKIES_JS,
-                       Fingerprint.DNT_JS,
-                       Fingerprint.END_TIME,
-                       Fingerprint.FONTS_FLASH_HASHED,
-                       Fingerprint.GLOBAL_BROWSER_VERSION,
-                       Fingerprint.LANGUAGE_FLASH,
-                       Fingerprint.LANGUAGE_INCONSISTENCY,
-                       Fingerprint.LOCAL_JS,
-                       Fingerprint.MINOR_BROWSER_VERSION,
-                       Fingerprint.MAJOR_BROWSER_VERSION,
-                       Fingerprint.NB_FONTS,
-                       Fingerprint.NB_PLUGINS,
-                       Fingerprint.COUNTER,
-                       Fingerprint.OS,
-                       Fingerprint.ACCEPT_HTTP,
-                       Fingerprint.CONNECTION_HTTP,
-                       Fingerprint.ENCODING_HTTP,
-                       Fingerprint.RESOLUTION_FLASH,
-                       Fingerprint.TIMEZONE_JS,
-                       Fingerprint.VENDOR,
-                       ])
+                           Fingerprint.PLATFORM_INCONSISTENCY,
+                           Fingerprint.PLATFORM_JS,
+                           Fingerprint.PLUGINS_JS_HASHED,
+                           Fingerprint.SESSION_JS,
+                           Fingerprint.IE_DATA_JS,
+                           Fingerprint.ADDRESS_HTTP,
+                           Fingerprint.BROWSER_FAMILY,
+                           Fingerprint.COOKIES_JS,
+                           Fingerprint.DNT_JS,
+                           Fingerprint.END_TIME,
+                           Fingerprint.FONTS_FLASH_HASHED,
+                           Fingerprint.GLOBAL_BROWSER_VERSION,
+                           Fingerprint.LANGUAGE_FLASH,
+                           Fingerprint.LANGUAGE_INCONSISTENCY,
+                           Fingerprint.LOCAL_JS,
+                           Fingerprint.MINOR_BROWSER_VERSION,
+                           Fingerprint.MAJOR_BROWSER_VERSION,
+                           Fingerprint.NB_FONTS,
+                           Fingerprint.NB_PLUGINS,
+                           Fingerprint.COUNTER,
+                           Fingerprint.OS,
+                           Fingerprint.HOST_HTTP,
+                           Fingerprint.ACCEPT_HTTP,
+                           Fingerprint.CONNECTION_HTTP,
+                           Fingerprint.ENCODING_HTTP,
+                           Fingerprint.RESOLUTION_FLASH,
+                           # Fingerprint.TIMEZONE_JS,
+                           Fingerprint.VENDOR,
+                           # Fingerprint.RENDERER
+                           ])
 
     att_ml = set(tmp_fp.val_attributes.keys())
     att_ml = sorted([x for x in att_ml if x not in not_to_test])
@@ -1510,7 +1518,8 @@ def benchmark_parallel_f_ml(fn, cur, nb_fps_query, nb_cores):
         if node_to_prediction.count(None) == len(node_to_prediction):
             prediction = "None"
         elif len(exact_matching) == 1 or candidates_have_same_id_bench(exact_matching):
-            prediction = (exact_matching[0][2], 1.1)
+            # print(exact_matching)
+            prediction = (exact_matching[0][0], 1.1)
         # the diff parameter is implicit since it has been applied on slave nodes
         elif node_to_prediction[max_index][1] > 0.98 and candidates_have_same_id_bench(node_to_prediction):
             prediction = node_to_prediction[max_index]

@@ -9,6 +9,7 @@ import MySQLdb as mdb
 from functools import partial
 from embedding_algo import train_siamese, embedding_based
 import argparse
+import numpy as np
 
 # Modes to run main.py
 CONSISTENT_IDS = "getids"
@@ -54,6 +55,7 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints, lam
     if algo_matching_name == "deepembedding":
         embedding_model = train_siamese(fingerprint_dataset, train_data, load=False)
 
+    times = []
 
     # select the right algorithm
     algo_name_to_function = {
@@ -69,11 +71,20 @@ def automate_replays(cur, exp_name, algo_matching_name, nb_min_fingerprints, lam
         result_scenario = replay_scenario(test_data, visit_frequency,
                                           algo_matching,
                                           filename="./results/" + exp_name + "_" + str(
-                                              visit_frequency) + "scenario_replay_result.csv")
+                                              visit_frequency) + "scenario_replay_result.csv", times = times)
         analyse_scenario_result(result_scenario, test_data,
                                 fileres1="./results/" + exp_name + "_" + str(visit_frequency) + "-res1.csv",
                                 fileres2="./results/" + exp_name + "_" + str(visit_frequency) + "-res2.csv",
                                 )
+
+    # Timing
+    times = np.asarray(times)
+    print("avg time : %f" % np.mean(times))
+    print("min time: %f" % np.min(times))
+    print("max time: %f" % np.max(times))
+    print("25pct : %f" % np.percentile(times, 25))
+    print("50pct : %f" % np.percentile(times, 50))
+    print("75pct : %f" % np.percentile(times, 75))
 
 
 def automate_ml_embedding(cur, exp_name, nb_min_fingerprints):
@@ -93,11 +104,11 @@ def optimize_lambda_main_call(cur, model_path, model_type):
     optimize_lambda(fingerprint_dataset, train_data, test_data, model_path, model_type)
 
 
-def benchmark_ml(cur, prefix_files, nb_cores):
+def benchmark_ml(cur, prefix_files, nb_cores, model_path, model_type):
     nb_processes = [1, 2, 4, 8, 16, 24, 32]
     nb_fingerprints = [500000, 1000000, 2000000]
     #  nb_fingerprints = [500000, 1000000, 2000000]
-    fn = parallel_pipe_task_ml_f
+    fn = partial(parallel_pipe_task_ml_f, model_path = model_path, model_type=model_type)
     with open("./benchres/%s.csv" % prefix_files, "w")as f:
         f.write("%s,%s,%s,%s,%s,%s,%s,%s,%s\n" %
                 ("nb_fingerprints",
@@ -169,14 +180,14 @@ def main(argv, lambda_threshold=0.5, diff=0.1, model_type="neural_net", model_pa
     elif argv[0] == OPTIMIZE_LAMBDA:
         optimize_lambda_main_call(cur, model_path, model_type)
     elif argv[0] == BENCHMARK_ML:
-        benchmark_ml(cur, argv[1], int(argv[2]))
+        benchmark_ml(cur, argv[1], int(argv[2]), model_path, model_type)
     elif argv[0] == BENCHMARK_RULES:
         benchmark_rules(cur, argv[1], int(argv[2]))
 
 if __name__ == "__main__":
     # model_type: "neuralnet", "randomforest", "logistic"
-    main(["auto", "nn100x100dp5wr2", "hybridalgo", "6"], lambda_threshold=0.9, diff=0.0, model_type="neuralnet",
-         model_path="./saved_models/nn100x100dp5wr2", train_round_2=True, load=False)
+    main(["auto", "timeRF", "hybridalgo", "6"], lambda_threshold=0.994, diff=0.10, model_type="randomforest",
+         model_path="./saved_models/my_ml_model", train_round_2=False, load=True)
     # main(["auto", "wBatchNorm2", "hybridalgo", "6"], lambda_threshold=0.3, diff=0.0, model_type="neuralnet",
     #      model_path="./saved_models/nn_trained_round_2", train_round_2=True, load=False)
 
@@ -187,3 +198,7 @@ if __name__ == "__main__":
     # Try optimized lambda
     # main(["auto", "bnorm2lam0", "hybridalgo", "6"], lambda_threshold=0, diff=0.0, model_type="neuralnet",
     #      model_path="./saved_models/nn_trained_round_2", train_round_2=False, load=True)
+
+    # Timing 
+    # main(["automlbench", "nn1core", "4", "4"], lambda_threshold=0.9, diff=0.1, model_type="randomforest",
+    #      model_path="./data/my_ml_model", train_round_2=False, load=True)
